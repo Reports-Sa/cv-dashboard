@@ -1,6 +1,6 @@
 // src/components/SidebarRight/ClientList.jsx
 import React, { useState, useMemo } from "react";
-import { isArabic, fmtDate, extractNameFromMarkdown, LS } from "../../utils/helpers";
+import { isArabic, fmtDate, extractNameFromMarkdown } from "../../utils/helpers";
 
 export default function ClientList({ submissions, selected, onSelect, loading, tasksMeta }) {
   const [search, setSearch] = useState("");
@@ -32,12 +32,25 @@ export default function ClientList({ submissions, selected, onSelect, loading, t
           const ar = isArabic(s.data.markdown_data);
           const displayName = s.data.name || extractNameFromMarkdown(s.data.markdown_data) || "— بدون اسم —";
           
-          // تحديد الحالة والستايل
-          const meta = tasksMeta[s.id] || { status: "new" };
+          // تحديد الحالة
+          const meta = (tasksMeta && tasksMeta[s.id]) || { status: "new" };
+          
           let statusClass = "";
-          if (meta.status === "completed") statusClass = "status-completed";
-          else if (meta.status === "in_progress") statusClass = "status-progress";
-          else if (meta.status === "canceled") statusClass = "status-canceled";
+          let badge = null;
+
+          if (meta.status === "completed") {
+            statusClass = "status-completed";
+            badge = <span className="status-badge-mini st-green">✔ منجز</span>;
+          } else if (meta.status === "in_progress") {
+            statusClass = "status-in_progress";
+            badge = <span className="status-badge-mini st-blue">⏳ جارٍ</span>;
+          } else if (meta.status === "paused") {
+            statusClass = "status-paused";
+            badge = <span className="status-badge-mini st-orange">⏸ متوقف</span>;
+          } else if (meta.status === "canceled") {
+            statusClass = "status-canceled";
+            badge = <span className="status-badge-mini st-red">✕ ملغي</span>;
+          }
 
           return (
             <div
@@ -49,9 +62,7 @@ export default function ClientList({ submissions, selected, onSelect, loading, t
               <div className="meta">
                 <span className={`badge ${ar ? "ar" : ""}`}>{ar ? "عربي" : "EN"}</span>
                 <span>{fmtDate(s.created_at)}</span>
-                {meta.status === "completed" && <span className="status-badge-mini st-green">✔ منجز</span>}
-                {meta.status === "in_progress" && <span className="status-badge-mini st-orange">⏳ جاري</span>}
-                {meta.status === "canceled" && <span className="status-badge-mini st-red">✕ ملغي</span>}
+                {badge}
               </div>
             </div>
           );
