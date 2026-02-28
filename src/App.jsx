@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import html2canvas from "html2canvas";
 
 import { LS, extractNameFromMarkdown } from "./utils/helpers";
@@ -12,7 +12,7 @@ import CVRenderer from "./components/Workspace/CVRenderer";
 import SettingsModal from "./components/Modals/SettingsModal";
 import CanvasModal from "./components/Modals/CanvasModal";
 
-const MOCK_SUBMISSIONS = [
+const MOCK_SUBMISSIONS =[
   { id: "sub_001", created_at: "2025-01-15T09:30:00Z", data: { name: "", email: "ahmed@example.com", markdown_data: "# 📋 طلب خدمة سيرة ذاتية\n\n## 2️⃣ المعلومات الشخصية\n\n- **الاسم الكامل:** أحمد محمد العلي\n- **رقم الجوال:** 0500000000" } }
 ];
 
@@ -20,7 +20,7 @@ export default function App() {
   const [toasts, setToasts] = useState([]);
   const toastAdd = useCallback((msg, type = "success") => {
     const id = Date.now() + Math.random();
-    setToasts((p) => [...p, { id, msg, type }]);
+    setToasts((p) =>[...p, { id, msg, type }]);
     setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 3200);
   }, []);
 
@@ -32,42 +32,18 @@ export default function App() {
 
   const [draftMode, setDraftMode] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [draftNotes, setDraftNotes] = useState({});
+  const[draftNotes, setDraftNotes] = useState({});
   const [showSettings, setShowSettings] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
-  const [isLeftOpen, setIsLeftOpen] = useState(true);
+  const[isLeftOpen, setIsLeftOpen] = useState(true);
   const [isRightOpen, setIsRightOpen] = useState(true);
   const [isActionCollapsed, setIsActionCollapsed] = useState(false);
 
   // --- منطق إدارة المهام والمؤقت ---
   const [tasksMeta, setTasksMeta] = useState(() => LS.get("tasks_meta", {})); 
-  
-  const [currentTimer, setCurrentTimer] = useState(0);
-  const timerRef = useRef(null);
 
   // حفظ حالة المهام في التخزين المحلي عند أي تغيير
   useEffect(() => { LS.set("tasks_meta", tasksMeta); }, [tasksMeta]);
-
-  // تشغيل العداد إذا كانت المهمة المختارة قيد التنفيذ
-  useEffect(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    
-    if (selected && tasksMeta[selected.id]?.status === "in_progress") {
-      // حساب الوقت بدقة بناءً على وقت البدء الأخير لتجنب مشاكل توقف المتصفح
-      const meta = tasksMeta[selected.id];
-      const now = Date.now();
-      const diff = Math.floor((now - meta.lastStart) / 1000);
-      setCurrentTimer(meta.seconds + diff);
-
-      timerRef.current = setInterval(() => {
-        setCurrentTimer((prev) => prev + 1);
-      }, 1000);
-    } else {
-      setCurrentTimer(selected && tasksMeta[selected.id] ? tasksMeta[selected.id].seconds : 0);
-    }
-
-    return () => clearInterval(timerRef.current);
-  }, [selected, tasksMeta]);
 
   const handleTaskAction = (action) => {
     if (!selected) return;
@@ -82,15 +58,13 @@ export default function App() {
       newMeta.lastStart = now;
       toastAdd("بدأ حساب الوقت ⏳", "info");
     } else if (action === "pause") {
-      newMeta.status = "paused"; // حالة مؤقتة للعرض البرتقالي
-      // حفظ الثواني المتراكمة
+      newMeta.status = "paused";
       const diff = Math.floor((now - currentMeta.lastStart) / 1000);
       newMeta.seconds += diff;
       newMeta.lastStart = null;
       toastAdd("تم إيقاف المؤقت", "info");
     } else if (action === "complete") {
       newMeta.status = "completed";
-      // إضافة الثواني الأخيرة إذا كان يعمل
       if (currentMeta.status === "in_progress") {
         const diff = Math.floor((now - currentMeta.lastStart) / 1000);
         newMeta.seconds += diff;
@@ -121,10 +95,10 @@ export default function App() {
       .finally(() => { if (!silent) setLoading(false); });
   }, [token, formId, toastAdd]);
 
-  useEffect(() => { if (token && formId) fetchSubmissions(true); }, [token, formId, fetchSubmissions]);
-  useEffect(() => { if (!token || !formId) return; const i = setInterval(() => fetchSubmissions(true), 30000); return () => clearInterval(i); }, [token, formId, fetchSubmissions]);
+  useEffect(() => { if (token && formId) fetchSubmissions(true); },[token, formId, fetchSubmissions]);
+  useEffect(() => { if (!token || !formId) return; const i = setInterval(() => fetchSubmissions(true), 30000); return () => clearInterval(i); },[token, formId, fetchSubmissions]);
 
-  useEffect(() => { if (!selected) return; setDraftNotes(LS.get(`drafts_${selected.id}`, {})); setEditMode(false); }, [selected?.id]);
+  useEffect(() => { if (!selected) return; setDraftNotes(LS.get(`drafts_${selected.id}`, {})); setEditMode(false); },[selected?.id]);
 
   const handleDraftChange = useCallback((key, val) => {
     setDraftNotes(prev => { const next = { ...prev, [key]: val }; if (selected) LS.set(`drafts_${selected.id}`, next); return next; });
@@ -140,7 +114,7 @@ export default function App() {
   const copyMarkdown = () => {
     if (!selected) return;
     const lines = (selected.data.markdown_data || "").split("\n");
-    const out = []; let hIdx = 0;
+    const out =[]; let hIdx = 0;
     lines.forEach(line => {
       out.push(line);
       if (/^#{2,3}\s/.test(line)) {
@@ -207,10 +181,8 @@ export default function App() {
             editMode={editMode} setEditMode={setEditMode} draftMode={draftMode} setDraftMode={setDraftMode}
             copyMarkdown={copyMarkdown} takeScreenshot={takeScreenshot} setShowCanvas={setShowCanvas}
             selected={selected} isCollapsed={isActionCollapsed} setIsCollapsed={setIsActionCollapsed} toastAdd={toastAdd}
-            // تمرير خصائص المؤقت
             taskMeta={selected ? (tasksMeta[selected.id] || {}) : {}}
             onTaskAction={handleTaskAction}
-            currentTimer={currentTimer}
           />
 
           <div className="workspace-body">
@@ -224,7 +196,7 @@ export default function App() {
         <div className="col-right" style={{ width: isRightOpen ? 240 : 0, borderRightColor: isRightOpen ? "" : "transparent" }}>
           <ClientList
             submissions={submissions} selected={selected} onSelect={setSelected} loading={loading}
-            tasksMeta={tasksMeta} // تمرير بيانات الحالة للقائمة
+            tasksMeta={tasksMeta} 
           />
         </div>
       </div>
