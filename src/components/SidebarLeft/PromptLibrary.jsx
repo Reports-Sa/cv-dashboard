@@ -1,35 +1,14 @@
 // src/components/SidebarLeft/PromptLibrary.jsx
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import Icon from "../UI/Icon";
 import PromptModal from "./PromptModal";
-import { LS } from "../../utils/helpers";
 
-const INITIAL_PROMPTS =[
-  {
-    id: 1,
-    title: "تحسين السيرة الذاتية",
-    content: "قم بتحسين هذه السيرة الذاتية مع التركيز على إبراز الإنجازات القابلة للقياس.",
-    category: "تحسين وتطوير",
-  },
-  {
-    id: 2,
-    title: "ملخص تنفيذي",
-    content: "اكتب ملخصاً تنفيذياً مقنعاً من 3-4 جمل لهذا المرشح.",
-    category: "تنسيق وكتابة",
-  },
-];
-
-export default function PromptLibrary({ toastAdd }) {
-  const [prompts, setPrompts] = useState(() => LS.get("prompts", INITIAL_PROMPTS));
+export default function PromptLibrary({ prompts, setPrompts, toastAdd }) {
   const[modal, setModal] = useState(null);
   const [flashId, setFlashId] = useState(null);
   const [collapsedCats, setCollapsedCats] = useState({});
   const timers = useRef({});
   const fileInputRef = useRef(null);
-
-  useEffect(() => {
-    LS.set("prompts", prompts);
-  }, [prompts]);
 
   const grouped = useMemo(() => {
     const map = {};
@@ -64,7 +43,7 @@ export default function PromptLibrary({ toastAdd }) {
 
   const savePrompt = (p) => {
     setPrompts((prev) =>
-      prev.some((x) => x.id === p.id) ? prev.map((x) => (x.id === p.id ? p : x)) : [...prev, p]
+      prev.some((x) => x.id === p.id) ? prev.map((x) => (x.id === p.id ? p : x)) :[...prev, p]
     );
     setModal(null);
   };
@@ -83,7 +62,6 @@ export default function PromptLibrary({ toastAdd }) {
     }
   };
 
-  // ----- دوال التصدير والاستيراد -----
   const exportPrompts = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(prompts));
     const dlNode = document.createElement("a");
@@ -92,7 +70,7 @@ export default function PromptLibrary({ toastAdd }) {
     document.body.appendChild(dlNode);
     dlNode.click();
     dlNode.remove();
-    toastAdd("تم تصدير البرومبتات بنجاح 📤", "success");
+    toastAdd("تم التصدير بنجاح 📤", "success");
   };
 
   const importPrompts = (e) => {
@@ -103,18 +81,17 @@ export default function PromptLibrary({ toastAdd }) {
       try {
         const imported = JSON.parse(event.target.result);
         if (Array.isArray(imported)) {
-          const newPrompts = [...prompts];
+          const newPrompts =[...prompts];
           imported.forEach((ip) => {
-            // إضافة البرومبت فقط إذا لم يكن موجوداً مسبقاً بنفس العنوان
             if (!newPrompts.some((p) => p.title === ip.title)) {
               newPrompts.push({ ...ip, id: Date.now() + Math.random() });
             }
           });
           setPrompts(newPrompts);
-          toastAdd("تم استيراد البرومبتات بنجاح 📥", "success");
+          toastAdd("تم الاستيراد بنجاح 📥", "success");
         }
       } catch (err) {
-        toastAdd("ملف غير صالح للاستيراد!", "error");
+        toastAdd("ملف غير صالح!", "error");
       }
       e.target.value = null; 
     };
