@@ -1,12 +1,36 @@
 // src/components/Workspace/ActionBar.jsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Icon from "../UI/Icon";
 import { isArabic, fmtDate, extractNameFromMarkdown, formatTime } from "../../utils/helpers";
+
+// مكون صغير معزول ليعمل كعداد ثواني بدون التأثير على باقي الموقع
+const LiveTimer = ({ meta }) => {
+  const [seconds, setSeconds] = useState(meta?.seconds || 0);
+
+  useEffect(() => {
+    let interval = null;
+    if (meta?.status === "in_progress" && meta?.lastStart) {
+      interval = setInterval(() => {
+        const diff = Math.floor((Date.now() - meta.lastStart) / 1000);
+        setSeconds((meta.seconds || 0) + diff);
+      }, 1000);
+    } else {
+      setSeconds(meta?.seconds || 0);
+    }
+    return () => clearInterval(interval);
+  }, [meta]);
+
+  return (
+    <div className="timer-widget active">
+      <span style={{ color: 'var(--danger)', fontSize: 16 }}>●</span> {formatTime(seconds)}
+    </div>
+  );
+};
 
 export default function ActionBar({
   editMode, setEditMode, draftMode, setDraftMode, copyMarkdown,
   takeScreenshot, setShowCanvas, selected, isCollapsed, setIsCollapsed, toastAdd,
-  taskMeta, onTaskAction, currentTimer // Props الجديدة للمؤقت
+  taskMeta, onTaskAction
 }) {
 
   const copyPhone = () => {
@@ -39,9 +63,7 @@ export default function ActionBar({
             <>
               {status === "in_progress" ? (
                 <>
-                  <div className="timer-widget active">
-                    <span style={{color:'var(--danger)', fontSize:16}}>●</span> {formatTime(currentTimer)}
-                  </div>
+                  <LiveTimer meta={taskMeta} />
                   <button className="btn btn-secondary btn-sm" onClick={() => onTaskAction("pause")} title="إيقاف مؤقت">
                     ⏸ إيقاف
                   </button>
