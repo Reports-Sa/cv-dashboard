@@ -32,17 +32,30 @@ export function fmtDate(s) {
   }
 }
 
-// الدالة الذكية لاستخراج الاسم من الماركداون
+// --- التحديث الجديد: استخراج الاسم بدقة ---
 export function extractNameFromMarkdown(md) {
   if (!md) return "";
-  
-  // 1. البحث عن أول عنوان رئيسي (مثال: # أحمد محمد)
-  const h1Match = md.match(/(?:^|\n)#\s+([^\n]+)/);
-  if (h1Match && h1Match[1]) return h1Match[1].trim();
 
-  // 2. البحث عن كلمة الاسم صراحة (مثال: الاسم الكامل: أحمد)
-  const kvMatch = md.match(/(?:الاسم الكامل|الاسم|Name):\s*([^\n]+)/i);
-  if (kvMatch && kvMatch[1]) return kvMatch[1].trim();
+  // 1. الأولوية القصوى: البحث عن سطر يحتوي على "الاسم الكامل" أو "الاسم"
+  // النمط يبحث عن: (شرطة) ثم (نجمتين) ثم (الاسم الكامل) ثم (نقطتين) ثم (نجمتين) ثم (الاسم)
+  // يتعامل بمرونة مع المسافات
+  const nameFieldRegex = /(?:-|\*)\s*(?:\*\*|__)?\s*(?:الاسم الكامل|الاسم|Name)\s*:\s*(?:\*\*|__)?\s*(.+?)(?:\n|$|\r)/i;
+  const nameMatch = md.match(nameFieldRegex);
+  
+  if (nameMatch && nameMatch[1]) {
+    // تنظيف الاسم من أي رموز زائدة
+    return nameMatch[1].trim();
+  }
+
+  // 2. محاولة احتياطية: البحث عن عنوان H1 فقط إذا لم يكن عنوان النموذج الافتراضي
+  const h1Match = md.match(/(?:^|\n)#\s+([^\n]+)/);
+  if (h1Match && h1Match[1]) {
+    const title = h1Match[1].trim();
+    // تجاهل العنوان إذا كان يحتوي على "طلب خدمة" أو "نموذج"
+    if (!title.includes("طلب خدمة") && !title.includes("سيرتي المميزة")) {
+      return title;
+    }
+  }
 
   return "";
 }
