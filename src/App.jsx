@@ -21,7 +21,7 @@ const MOCK_SUBMISSIONS = [
       name: "",
       email: "ahmed@example.com",
       markdown_data:
-        "# أحمد محمد العلي\n**مطور برمجيات أول | متخصص في الذكاء الاصطناعي**\nالرياض، السعودية | ahmed@example.com | +966 50 000 0000\n\n---\n\n## الملخص المهني\nمطور برمجيات متمرس بخبرة تزيد عن 8 سنوات...",
+        "# 📋 طلب خدمة سيرة ذاتية\n\n## 2️⃣ المعلومات الشخصية\n\n- **الاسم الكامل:** أحمد محمد العلي\n- **رقم الجوال:** 0500000000",
     },
   },
 ];
@@ -51,7 +51,7 @@ export default function App() {
   const [isRightOpen, setIsRightOpen] = useState(true);
   const [isActionCollapsed, setIsActionCollapsed] = useState(false);
 
-  // دالة جلب البيانات مع دعم الجلب الصامت (بدون لودينج مزعج للتحديث الخلفي)
+  // دالة جلب البيانات
   const fetchSubmissions = useCallback(
     (silent = false) => {
       if (!token || !formId) {
@@ -81,23 +81,22 @@ export default function App() {
     [token, formId, toastAdd]
   );
 
-  // الجلب التلقائي عند فتح الصفحة (Mount)
+  // الجلب التلقائي عند فتح الصفحة
   useEffect(() => {
     if (token && formId) {
-      fetchSubmissions(true); // جلب أولي (يمكنك جعله false إذا أردت ظهور اللودر)
+      fetchSubmissions(true);
     }
   }, [token, formId, fetchSubmissions]);
 
-  // التحديث التلقائي في الخلفية (Polling) كل 30 ثانية
+  // التحديث التلقائي في الخلفية
   useEffect(() => {
     if (!token || !formId) return;
     const interval = setInterval(() => {
-      fetchSubmissions(true); // جلب صامت
+      fetchSubmissions(true);
     }, 30000);
     return () => clearInterval(interval);
   }, [token, formId, fetchSubmissions]);
 
-  // إدارة الملاحظات والمسودة عند تغيير العميل
   useEffect(() => {
     if (!selected) return;
     setDraftNotes(LS.get(`drafts_${selected.id}`, {}));
@@ -130,7 +129,6 @@ export default function App() {
     [selected?.id]
   );
 
-  // نسخ الماركداون مع الملاحظات
   const copyMarkdown = () => {
     if (!selected) {
       toastAdd("اختر عميلاً أولاً", "error");
@@ -154,7 +152,6 @@ export default function App() {
       .then(() => toastAdd("تم نسخ Markdown مع الملاحظات ✓", "success"));
   };
 
-  // تصوير الشاشة
   const takeScreenshot = useCallback(() => {
     const el = document.querySelector(".cv-content");
     if (!el) {
@@ -173,18 +170,14 @@ export default function App() {
       .catch(() => toastAdd("فشل التصوير", "error"));
   }, [selected, toastAdd]);
 
-  // اختصارات لوحة المفاتيح
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // تصوير الشاشة Ctrl+Shift+S
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s") {
         e.preventDefault();
         takeScreenshot();
       }
-      // طي/توسيع كل القوائم Alt+C (Toggle Collapse)
       if (e.altKey && e.key.toLowerCase() === "c") {
         e.preventDefault();
-        // إذا كان أي شيء مفتوحاً، نغلق الجميع. إذا كان الجميع مغلقاً، نفتحهم.
         const anyOpen = isLeftOpen || isRightOpen || !isActionCollapsed;
         if (anyOpen) {
           setIsLeftOpen(false);
@@ -201,7 +194,6 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [takeScreenshot, isLeftOpen, isRightOpen, isActionCollapsed]);
 
-  // الاسم المعروض في الشريط السفلي
   const displaySelectedName =
     selected?.data?.name ||
     extractNameFromMarkdown(selected?.data?.markdown_data) ||
@@ -209,10 +201,9 @@ export default function App() {
 
   return (
     <>
-      {/* الرأس */}
       <header className="header">
         <div className="header-brand">
-          <div className="dot" /> لوحة إدارة السير الذاتية
+          <div className="dot" /> لوحة إدارة السير الذاتية | غازي
         </div>
         <div className="header-actions">
           <button
@@ -236,9 +227,7 @@ export default function App() {
       </header>
       {loading && <div className="loading-bar" />}
 
-      {/* التخطيط الرئيسي */}
       <div className="layout">
-        {/* الشريط الجانبي الأيسر (البرومبت) */}
         <div
           className="col-left"
           style={{
@@ -249,7 +238,6 @@ export default function App() {
           <PromptLibrary toastAdd={toastAdd} />
         </div>
 
-        {/* المنطقة الوسطى (العمل) */}
         <div className="col-mid">
           <button
             className="sidebar-toggle toggle-right"
@@ -290,7 +278,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* الشريط الجانبي الأيمن (العملاء) */}
         <div
           className="col-right"
           style={{
@@ -307,7 +294,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* شريط الحالة السفلي */}
       <div className="status-bar">
         <span className={`status-dot ${token && formId ? "" : "warn"}`} />
         <span>{token && formId ? "متصل بـ Netlify" : "بيانات تجريبية"}</span>
@@ -316,7 +302,6 @@ export default function App() {
         <span>| <kbd>Alt+C</kbd> لطي الشاشات</span>
       </div>
 
-      {/* النوافذ المنبثقة */}
       {showSettings && (
         <SettingsModal
           initialToken={token}
@@ -329,7 +314,6 @@ export default function App() {
             LS.set("netlify_form_id", f);
             setShowSettings(false);
             toastAdd("تم حفظ الإعدادات ✓", "success");
-            // جلب البيانات فوراً بعد الحفظ
             setTimeout(() => fetchSubmissions(false), 100);
           }}
         />
