@@ -12,12 +12,18 @@ import CVRenderer from "./components/Workspace/CVRenderer";
 import SettingsModal from "./components/Modals/SettingsModal";
 import CanvasModal from "./components/Modals/CanvasModal";
 
-const MOCK_SUBMISSIONS =[
+// بيانات تجريبية في حال عدم الاتصال
+const MOCK_SUBMISSIONS = [
   {
     id: "sub_001",
     created_at: "2025-01-15T09:30:00Z",
-    data: { name: "", email: "ahmed@example.com", markdown_data: "# أحمد محمد العلي\n**مطور برمجيات أول | متخصص في الذكاء الاصطناعي**\nالرياض، السعودية | ahmed@example.com | +966 50 000 0000\n\n---\n\n## الملخص المهني\nمطور برمجيات متمرس بخبرة تزيد عن 8 سنوات..." },
-  }
+    data: {
+      name: "",
+      email: "ahmed@example.com",
+      markdown_data:
+        "# أحمد محمد العلي\n**مطور برمجيات أول | متخصص في الذكاء الاصطناعي**\nالرياض، السعودية | ahmed@example.com | +966 50 000 0000\n\n---\n\n## الملخص المهني\nمطور برمجيات متمرس بخبرة تزيد عن 8 سنوات...",
+    },
+  },
 ];
 
 export default function App() {
@@ -35,99 +41,126 @@ export default function App() {
   const [loading, setLoading] = useState(false);
 
   const [draftMode, setDraftMode] = useState(false);
-  const[editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [draftNotes, setDraftNotes] = useState({});
 
   const [showSettings, setShowSettings] = useState(false);
-  const[showCanvas, setShowCanvas] = useState(false);
+  const [showCanvas, setShowCanvas] = useState(false);
 
   const [isLeftOpen, setIsLeftOpen] = useState(true);
   const [isRightOpen, setIsRightOpen] = useState(true);
-  const[isActionCollapsed, setIsActionCollapsed] = useState(false);
+  const [isActionCollapsed, setIsActionCollapsed] = useState(false);
 
-  // دالة جلب البيانات مع دعم الجلب الصامت (بدون لودينج مزعج)
-  const fetchSubmissions = useCallback((silent = false) => {
-    if (!token || !formId) {
-      if (!silent) toastAdd("لم يتم تهيئة الرمز — بيانات تجريبية", "info");
-      return;
-    }
-    if (!silent) setLoading(true);
-    fetch(`https://api.netlify.com/api/v1/forms/${formId}/submissions`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => {
-        if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-        return r.json();
+  // دالة جلب البيانات مع دعم الجلب الصامت (بدون لودينج مزعج للتحديث الخلفي)
+  const fetchSubmissions = useCallback(
+    (silent = false) => {
+      if (!token || !formId) {
+        if (!silent) toastAdd("لم يتم تهيئة الرمز — بيانات تجريبية", "info");
+        return;
+      }
+      if (!silent) setLoading(true);
+      fetch(`https://api.netlify.com/api/v1/forms/${formId}/submissions`, {
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .then((data) => {
-        setSubmissions(data);
-        if (!silent) toastAdd(`تم تحميل ${data.length} طلب بنجاح`, "success");
-      })
-      .catch((e) => {
-        if (!silent) toastAdd(`خطأ: ${e.message}`, "error");
-        if (!silent) setSubmissions(MOCK_SUBMISSIONS);
-      })
-      .finally(() => {
-        if (!silent) setLoading(false);
-      });
-  }, [token, formId, toastAdd]);
+        .then((r) => {
+          if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+          return r.json();
+        })
+        .then((data) => {
+          setSubmissions(data);
+          if (!silent) toastAdd(`تم تحميل ${data.length} طلب بنجاح`, "success");
+        })
+        .catch((e) => {
+          if (!silent) toastAdd(`خطأ: ${e.message}`, "error");
+          if (!silent) setSubmissions(MOCK_SUBMISSIONS);
+        })
+        .finally(() => {
+          if (!silent) setLoading(false);
+        });
+    },
+    [token, formId, toastAdd]
+  );
 
-  // الجلب التلقائي عند فتح الصفحة
+  // الجلب التلقائي عند فتح الصفحة (Mount)
   useEffect(() => {
     if (token && formId) {
-      fetchSubmissions(true); 
+      fetchSubmissions(true); // جلب أولي (يمكنك جعله false إذا أردت ظهور اللودر)
     }
   }, [token, formId, fetchSubmissions]);
 
-  // التحديث التلقائي في الخلفية (كل 30 ثانية)
+  // التحديث التلقائي في الخلفية (Polling) كل 30 ثانية
   useEffect(() => {
     if (!token || !formId) return;
     const interval = setInterval(() => {
       fetchSubmissions(true); // جلب صامت
     }, 30000);
     return () => clearInterval(interval);
-  },[token, formId, fetchSubmissions]);
+  }, [token, formId, fetchSubmissions]);
 
+  // إدارة الملاحظات والمسودة عند تغيير العميل
   useEffect(() => {
     if (!selected) return;
     setDraftNotes(LS.get(`drafts_${selected.id}`, {}));
     setEditMode(false);
   }, [selected?.id]);
 
-  const handleDraftChange = useCallback((key, val) => {
-    setDraftNotes((prev) => {
-      const next = { ...prev, [key]: val };
-      if (selected) LS.set(`drafts_${selected.id}`, next);
-      return next;
-    });
-  }, [selected?.id]);
+  const handleDraftChange = useCallback(
+    (key, val) => {
+      setDraftNotes((prev) => {
+        const next = { ...prev, [key]: val };
+        if (selected) LS.set(`drafts_${selected.id}`, next);
+        return next;
+      });
+    },
+    [selected?.id]
+  );
 
-  const handleMarkdownChange = useCallback((newMd) => {
-    if (!selected) return;
-    const updated = { ...selected, data: { ...selected.data, markdown_data: newMd } };
-    setSelected(updated);
-    setSubmissions((prev) => prev.map((s) => (s.id === selected.id ? updated : s)));
-  }, [selected?.id]);
+  const handleMarkdownChange = useCallback(
+    (newMd) => {
+      if (!selected) return;
+      const updated = {
+        ...selected,
+        data: { ...selected.data, markdown_data: newMd },
+      };
+      setSelected(updated);
+      setSubmissions((prev) =>
+        prev.map((s) => (s.id === selected.id ? updated : s))
+      );
+    },
+    [selected?.id]
+  );
 
+  // نسخ الماركداون مع الملاحظات
   const copyMarkdown = () => {
-    if (!selected) { toastAdd("اختر عميلاً أولاً", "error"); return; }
+    if (!selected) {
+      toastAdd("اختر عميلاً أولاً", "error");
+      return;
+    }
     const lines = (selected.data.markdown_data || "").split("\n");
-    const out =[];
+    const out = [];
     let hIdx = 0;
     lines.forEach((line) => {
       out.push(line);
       if (/^#{2,3}\s/.test(line)) {
         const note = draftNotes[`${selected.id}_${hIdx}`];
-        if (note && note.trim()) { out.push("", `> **ملاحظة المستشار:** ${note.trim()}`, ""); }
+        if (note && note.trim()) {
+          out.push("", `> **ملاحظة المستشار:** ${note.trim()}`, "");
+        }
         hIdx++;
       }
     });
-    navigator.clipboard.writeText(out.join("\n")).then(() => toastAdd("تم نسخ Markdown مع الملاحظات ✓", "success"));
+    navigator.clipboard
+      .writeText(out.join("\n"))
+      .then(() => toastAdd("تم نسخ Markdown مع الملاحظات ✓", "success"));
   };
 
+  // تصوير الشاشة
   const takeScreenshot = useCallback(() => {
     const el = document.querySelector(".cv-content");
-    if (!el) { toastAdd("لا يوجد محتوى للتصوير", "error"); return; }
+    if (!el) {
+      toastAdd("لا يوجد محتوى للتصوير", "error");
+      return;
+    }
     toastAdd("جاري التصوير...", "info");
     html2canvas(el, { scale: 2, useCORS: true, backgroundColor: "#ffffff" })
       .then((canvas) => {
@@ -148,64 +181,133 @@ export default function App() {
         e.preventDefault();
         takeScreenshot();
       }
-      // طي كل شيء Alt+C
+      // طي/توسيع كل القوائم Alt+C (Toggle Collapse)
       if (e.altKey && e.key.toLowerCase() === "c") {
         e.preventDefault();
+        // إذا كان أي شيء مفتوحاً، نغلق الجميع. إذا كان الجميع مغلقاً، نفتحهم.
         const anyOpen = isLeftOpen || isRightOpen || !isActionCollapsed;
-        setIsLeftOpen(!anyOpen);
-        setIsRightOpen(!anyOpen);
-        setIsActionCollapsed(anyOpen);
+        if (anyOpen) {
+          setIsLeftOpen(false);
+          setIsRightOpen(false);
+          setIsActionCollapsed(true);
+        } else {
+          setIsLeftOpen(true);
+          setIsRightOpen(true);
+          setIsActionCollapsed(false);
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  },[takeScreenshot, isLeftOpen, isRightOpen, isActionCollapsed]);
+  }, [takeScreenshot, isLeftOpen, isRightOpen, isActionCollapsed]);
 
-  const displaySelectedName = selected?.data?.name || extractNameFromMarkdown(selected?.data?.markdown_data) || "—";
+  // الاسم المعروض في الشريط السفلي
+  const displaySelectedName =
+    selected?.data?.name ||
+    extractNameFromMarkdown(selected?.data?.markdown_data) ||
+    "—";
 
   return (
     <>
+      {/* الرأس */}
       <header className="header">
-        <div className="header-brand"><div className="dot" /> لوحة إدارة السير الذاتية</div>
+        <div className="header-brand">
+          <div className="dot" /> لوحة إدارة السير الذاتية
+        </div>
         <div className="header-actions">
-          <button className="btn btn-secondary btn-sm" onClick={() => fetchSubmissions(false)}>
-            {loading ? <div className="spinner" /> : <Icon name="refresh" size={14} />} تحديث يدوي
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => fetchSubmissions(false)}
+          >
+            {loading ? (
+              <div className="spinner" />
+            ) : (
+              <Icon name="refresh" size={14} />
+            )}{" "}
+            تحديث يدوي
           </button>
-          <button className="btn btn-ghost btn-icon" onClick={() => setShowSettings(true)}>
+          <button
+            className="btn btn-ghost btn-icon"
+            onClick={() => setShowSettings(true)}
+          >
             <Icon name="settings" size={18} />
           </button>
         </div>
       </header>
       {loading && <div className="loading-bar" />}
 
+      {/* التخطيط الرئيسي */}
       <div className="layout">
-        <div className="col-left" style={{ width: isLeftOpen ? 240 : 0, borderLeftColor: isLeftOpen ? "" : "transparent" }}>
+        {/* الشريط الجانبي الأيسر (البرومبت) */}
+        <div
+          className="col-left"
+          style={{
+            width: isLeftOpen ? 240 : 0,
+            borderLeftColor: isLeftOpen ? "" : "transparent",
+          }}
+        >
           <PromptLibrary toastAdd={toastAdd} />
         </div>
 
+        {/* المنطقة الوسطى (العمل) */}
         <div className="col-mid">
-          <button className="sidebar-toggle toggle-right" onClick={() => setIsLeftOpen(!isLeftOpen)}>{isLeftOpen ? "›" : "‹"}</button>
-          <button className="sidebar-toggle toggle-left" onClick={() => setIsRightOpen(!isRightOpen)}>{isRightOpen ? "‹" : "›"}</button>
+          <button
+            className="sidebar-toggle toggle-right"
+            onClick={() => setIsLeftOpen(!isLeftOpen)}
+          >
+            {isLeftOpen ? "›" : "‹"}
+          </button>
+          <button
+            className="sidebar-toggle toggle-left"
+            onClick={() => setIsRightOpen(!isRightOpen)}
+          >
+            {isRightOpen ? "‹" : "›"}
+          </button>
 
           <ActionBar
-            editMode={editMode} setEditMode={setEditMode} draftMode={draftMode} setDraftMode={setDraftMode}
-            copyMarkdown={copyMarkdown} takeScreenshot={takeScreenshot} setShowCanvas={setShowCanvas}
-            selected={selected} isCollapsed={isActionCollapsed} setIsCollapsed={setIsActionCollapsed} toastAdd={toastAdd}
+            editMode={editMode}
+            setEditMode={setEditMode}
+            draftMode={draftMode}
+            setDraftMode={setDraftMode}
+            copyMarkdown={copyMarkdown}
+            takeScreenshot={takeScreenshot}
+            setShowCanvas={setShowCanvas}
+            selected={selected}
+            isCollapsed={isActionCollapsed}
+            setIsCollapsed={setIsActionCollapsed}
+            toastAdd={toastAdd}
           />
 
           <div className="workspace-body">
             <CVRenderer
-              submission={selected} editMode={editMode} draftMode={draftMode && !editMode}
-              draftNotes={draftNotes} onDraftChange={handleDraftChange} onMarkdownChange={handleMarkdownChange}
+              submission={selected}
+              editMode={editMode}
+              draftMode={draftMode && !editMode}
+              draftNotes={draftNotes}
+              onDraftChange={handleDraftChange}
+              onMarkdownChange={handleMarkdownChange}
             />
           </div>
         </div>
 
-        <div className="col-right" style={{ width: isRightOpen ? 240 : 0, borderRightColor: isRightOpen ? "" : "transparent" }}>
-          <ClientList submissions={submissions} selected={selected} onSelect={setSelected} loading={loading} />
+        {/* الشريط الجانبي الأيمن (العملاء) */}
+        <div
+          className="col-right"
+          style={{
+            width: isRightOpen ? 240 : 0,
+            borderRightColor: isRightOpen ? "" : "transparent",
+          }}
+        >
+          <ClientList
+            submissions={submissions}
+            selected={selected}
+            onSelect={setSelected}
+            loading={loading}
+          />
         </div>
       </div>
 
+      {/* شريط الحالة السفلي */}
       <div className="status-bar">
         <span className={`status-dot ${token && formId ? "" : "warn"}`} />
         <span>{token && formId ? "متصل بـ Netlify" : "بيانات تجريبية"}</span>
@@ -214,7 +316,26 @@ export default function App() {
         <span>| <kbd>Alt+C</kbd> لطي الشاشات</span>
       </div>
 
+      {/* النوافذ المنبثقة */}
       {showSettings && (
         <SettingsModal
-          initialToken={token} initialFormId={formId} onClose={() => setShowSettings(false)}
-          onSave={(t, f) => { setToken(t); setFormId(
+          initialToken={token}
+          initialFormId={formId}
+          onClose={() => setShowSettings(false)}
+          onSave={(t, f) => {
+            setToken(t);
+            setFormId(f);
+            LS.set("netlify_token", t);
+            LS.set("netlify_form_id", f);
+            setShowSettings(false);
+            toastAdd("تم حفظ الإعدادات ✓", "success");
+            // جلب البيانات فوراً بعد الحفظ
+            setTimeout(() => fetchSubmissions(false), 100);
+          }}
+        />
+      )}
+      {showCanvas && <CanvasModal onClose={() => setShowCanvas(false)} />}
+      <Toasts toasts={toasts} />
+    </>
+  );
+}
