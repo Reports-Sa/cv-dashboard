@@ -55,7 +55,7 @@ body {
   background: var(--text-muted);
 }
 
-/* Classes from your original HTML */
+/* Header */
 .header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -97,6 +97,7 @@ body {
   gap: 8px;
 }
 
+/* Layout */
 .layout {
   display: flex;
   flex: 1;
@@ -151,6 +152,7 @@ body {
   padding: 10px;
 }
 
+/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -208,7 +210,7 @@ body {
   background: #fee2e2;
 }
 
-/* Action Bar Container Transition */
+/* Action Bar Container */
 .action-bar-container {
   overflow: hidden;
   transition: all 0.3s ease-in-out;
@@ -267,7 +269,7 @@ body {
   cursor: not-allowed;
 }
 
-/* Custom Pills for Phone/Name Copy */
+/* Custom Pills */
 .pill-btn {
   display: inline-flex;
   align-items: center;
@@ -348,6 +350,7 @@ body {
   border-right: none;
 }
 
+/* Workspace */
 .workspace-body {
   flex: 1;
   overflow-y: auto;
@@ -691,7 +694,6 @@ ol {
   padding-right: 6px;
 }
 
-/* Delete Icon inside Category/Prompt */
 .delete-icon-btn {
   background: transparent;
   border: none;
@@ -963,3 +965,55 @@ kbd {
   border-color: var(--accent);
   background: var(--surface);
 }
+
+/* ════ NEW ADDITIONS (Status & Timer) ════ */
+
+/* Status Colors for Client Card */
+.client-card.status-completed {
+  border-right: 4px solid var(--success);
+}
+.client-card.status-progress {
+  border-right: 4px solid var(--warning);
+  background: #fffbeb;
+}
+.client-card.status-canceled {
+  border-right: 4px solid var(--danger);
+  opacity: 0.7;
+}
+
+/* Timer Widget Styling */
+.timer-widget {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  padding: 4px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  color: var(--accent);
+  margin-left: 8px;
+  font-size: 13px;
+}
+.timer-widget.active {
+  background: #eff6ff;
+  border-color: var(--accent);
+  animation: pulse-border 2s infinite;
+}
+@keyframes pulse-border {
+  0% { border-color: var(--accent); }
+  50% { border-color: transparent; }
+  100% { border-color: var(--accent); }
+}
+
+.status-badge-mini {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  margin-right: 4px;
+}
+.st-green { background: #d1fae5; color: #065f46; }
+.st-orange { background: #fef3c7; color: #92400e; }
+.st-red { background: #fee2e2; color: #991b1b; }
