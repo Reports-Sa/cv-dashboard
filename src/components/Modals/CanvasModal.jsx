@@ -12,7 +12,7 @@ const CanvasModal = React.memo(function CanvasModal({ onClose }) {
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
              <Icon name="canvas" size={20} style={{ color: 'var(--accent)' }} />
-             <h3>🎨 اللوحة البصرية (إصدار 3.x المجاني)</h3>
+             <h3>🎨 اللوحة البصرية </h3>
           </div>
           <button className="btn btn-ghost btn-icon" onClick={onClose}>
             <Icon name="close" size={18} />
@@ -32,3 +32,4 @@ const CanvasModal = React.memo(function CanvasModal({ onClose }) {
 });
 
 export default CanvasModal;
+
