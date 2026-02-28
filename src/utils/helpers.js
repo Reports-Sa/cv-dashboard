@@ -32,30 +32,27 @@ export function fmtDate(s) {
   }
 }
 
-// --- التحديث الجديد: استخراج الاسم بدقة ---
+// دالة تنسيق الثواني إلى وقت (HH:MM:SS)
+export function formatTime(totalSeconds) {
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  
+  const pad = (n) => n.toString().padStart(2, "0");
+  if (h > 0) return `${pad(h)}:${pad(m)}:${pad(s)}`;
+  return `${pad(m)}:${pad(s)}`;
+}
+
 export function extractNameFromMarkdown(md) {
   if (!md) return "";
-
-  // 1. الأولوية القصوى: البحث عن سطر يحتوي على "الاسم الكامل" أو "الاسم"
-  // النمط يبحث عن: (شرطة) ثم (نجمتين) ثم (الاسم الكامل) ثم (نقطتين) ثم (نجمتين) ثم (الاسم)
-  // يتعامل بمرونة مع المسافات
   const nameFieldRegex = /(?:-|\*)\s*(?:\*\*|__)?\s*(?:الاسم الكامل|الاسم|Name)\s*:\s*(?:\*\*|__)?\s*(.+?)(?:\n|$|\r)/i;
   const nameMatch = md.match(nameFieldRegex);
-  
-  if (nameMatch && nameMatch[1]) {
-    // تنظيف الاسم من أي رموز زائدة
-    return nameMatch[1].trim();
-  }
+  if (nameMatch && nameMatch[1]) return nameMatch[1].trim();
 
-  // 2. محاولة احتياطية: البحث عن عنوان H1 فقط إذا لم يكن عنوان النموذج الافتراضي
   const h1Match = md.match(/(?:^|\n)#\s+([^\n]+)/);
   if (h1Match && h1Match[1]) {
     const title = h1Match[1].trim();
-    // تجاهل العنوان إذا كان يحتوي على "طلب خدمة" أو "نموذج"
-    if (!title.includes("طلب خدمة") && !title.includes("سيرتي المميزة")) {
-      return title;
-    }
+    if (!title.includes("طلب خدمة") && !title.includes("سيرتي المميزة")) return title;
   }
-
   return "";
 }
