@@ -30,7 +30,7 @@ export default function App() {
 
   const [token, setToken] = useState(() => LS.get("netlify_token", ""));
   const [formId, setFormId] = useState(() => LS.get("netlify_form_id", ""));
-  const [binKey, setBinKey] = useState(() => LS.get("jsonbin_key", ""));
+  const[binKey, setBinKey] = useState(() => LS.get("jsonbin_key", ""));
   const[binId, setBinId] = useState(() => LS.get("jsonbin_id", ""));
 
   const[submissions, setSubmissions] = useState(MOCK_SUBMISSIONS);
@@ -129,7 +129,7 @@ export default function App() {
   useEffect(() => { if (!selected) return; setDraftNotes(LS.get(`drafts_${selected.id}`, {})); setEditMode(false); },[selected?.id]);
 
   const handleDraftChange = useCallback((key, val) => {
-    setDraftNotes(prev => { const next = { ...prev, [key]: val }; if (selected) LS.set(`drafts_${selected.id}`, next); return next; });
+    setDraftNotes(prev => { const next = { ...prev,[key]: val }; if (selected) LS.set(`drafts_${selected.id}`, next); return next; });
   }, [selected?.id]);
 
   const handleMarkdownChange = useCallback((newMd) => {
@@ -137,7 +137,7 @@ export default function App() {
     const updated = { ...selected, data: { ...selected.data, markdown_data: newMd } };
     setSelected(updated);
     setSubmissions(prev => prev.map(s => (s.id === selected.id ? updated : s)));
-  }, [selected?.id]);
+  },[selected?.id]);
 
   const copyMarkdown = () => {
     if (!selected) return;
@@ -167,10 +167,16 @@ export default function App() {
     });
   }, [selected, toastAdd]);
 
+  // تحديث اختصارات لوحة المفاتيح لدعم اللغة العربية
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s") { e.preventDefault(); takeScreenshot(); }
-      if (e.altKey && e.key.toLowerCase() === "c") {
+      // تصوير الشاشة (Ctrl+Shift+S أو س)
+      if (e.ctrlKey && e.shiftKey && (e.code === "KeyS" || e.key.toLowerCase() === "s" || e.key === "س")) { 
+        e.preventDefault(); 
+        takeScreenshot(); 
+      }
+      // طي/توسيع القوائم (Alt+C أو ؤ)
+      if (e.altKey && (e.code === "KeyC" || e.key.toLowerCase() === "c" || e.key === "ؤ")) {
         e.preventDefault();
         const anyOpen = isLeftOpen || isRightOpen || !isActionCollapsed;
         if (anyOpen) { setIsLeftOpen(false); setIsRightOpen(false); setIsActionCollapsed(true); } 
@@ -179,7 +185,7 @@ export default function App() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [takeScreenshot, isLeftOpen, isRightOpen, isActionCollapsed]);
+  },[takeScreenshot, isLeftOpen, isRightOpen, isActionCollapsed]);
 
   const displaySelectedName = selected?.data?.name || extractNameFromMarkdown(selected?.data?.markdown_data) || "—";
 
