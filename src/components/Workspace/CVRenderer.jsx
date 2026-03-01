@@ -9,7 +9,6 @@ export default function CVRenderer({ submission, draftMode, draftNotes, editMode
   const md = submission?.data?.markdown_data || '';
   const rtl = isArabic(md);
 
-  // استخدام useRef للاحتفاظ بأحدث الملاحظات بدون التسبب في إعادة رسم (Re-render) يمسح مؤشر الكتابة
   const draftNotesRef = useRef(draftNotes);
   useEffect(() => {
     draftNotesRef.current = draftNotes;
@@ -18,9 +17,10 @@ export default function CVRenderer({ submission, draftMode, draftNotes, editMode
   useEffect(() => {
     if (editMode || !ref.current || !md) return;
     
-    // رسم السيرة الذاتية من الماركداون
+    // 1. تحويل الماركداون إلى نصوص مرئية
     ref.current.innerHTML = marked.parse(md);
     
+    // 2. إضافة حقول المسودة إن كان وضع المسودة مفعلاً
     if (draftMode && submission) {
       const headings = ref.current.querySelectorAll('h2, h3');
       headings.forEach((h, i) => {
@@ -34,8 +34,6 @@ export default function CVRenderer({ submission, draftMode, draftNotes, editMode
         const ta = document.createElement('textarea');
         ta.className = 'draft-area';
         ta.placeholder = 'أضف ملاحظاتك هنا...';
-        
-        // جلب القيمة من المرجع بدلاً من الـ State لمنع فقدان التركيز (Focus)
         ta.value = draftNotesRef.current[key] || '';
         
         ta.addEventListener('input', (e) => {
@@ -47,8 +45,42 @@ export default function CVRenderer({ submission, draftMode, draftNotes, editMode
         h.parentNode.insertBefore(wrap, h.nextSibling);
       });
     }
-  // إزالة draftNotes من المصفوفة هنا هو السر الذي سيمنع تقطيع الكتابة!
-  },[md, draftMode, editMode, submission, onDraftChange]);
+
+    // 3. إضافة ميزة (طي الأقسام) لجميع العناوين
+    const allHeadings = ref.current.querySelectorAll('h2, h3');
+    allHeadings.forEach((h) => {
+      // إنشاء أيقونة السهم
+      const icon = document.createElement('span');
+      icon.innerHTML = '▾';
+      icon.style.display = 'inline-block';
+      icon.style.marginLeft = '8px'; // مسافة لتناسب التنسيق العربي
+      icon.style.transition = 'transform 0.2s ease';
+      
+      // تنسيق العنوان ليكون قابلاً للضغط
+      h.style.cursor = 'pointer';
+      h.style.userSelect = 'none';
+      h.title = "اضغط لطي أو إظهار هذا القسم";
+      h.prepend(icon); // إضافة السهم قبل النص
+
+      // حدث الضغط للطي والإظهار
+      h.addEventListener('click', () => {
+        const isCollapsed = h.classList.toggle('is-collapsed');
+        // تدوير السهم عند الطي
+        icon.style.transform = isCollapsed ? 'rotate(90deg)' : 'rotate(0deg)';
+        
+        let sibling = h.nextElementSibling;
+        while (sibling) {
+          // التوقف إذا وصلنا لعنوان بنفس المستوى أو أكبر
+          if (h.tagName === 'H2' && sibling.tagName === 'H2') break;
+          if (h.tagName === 'H3' && (sibling.tagName === 'H2' || sibling.tagName === 'H3')) break;
+          
+          sibling.style.display = isCollapsed ? 'none' : '';
+          sibling = sibling.nextElementSibling;
+        }
+      });
+    });
+
+  }, [md, draftMode, editMode, submission, onDraftChange]);
 
   if (!submission) {
     return (
@@ -62,11 +94,8 @@ export default function CVRenderer({ submission, draftMode, draftNotes, editMode
 
   if (editMode) {
     return (
-      <div className="cv-card" style={{ display: 'flex', flexDirection: 'column', minHeight: '500px', height: '100%' }}>
-        {/* الشريط الأزرق معزول تماماً عن صندوق الكتابة */}
-        <div className="edit-mode-banner">
-          <Icon name="edit" size={14} /> وضع التحرير المباشر — Markdown الخام
-        </div>
+      <div className="cv-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {/* تم إزالة الشريط الأزرق ليكون صندوق التحرير نظيفاً ويملأ الشاشة */}
         <textarea
           className="cv-edit-textarea"
           value={md}
