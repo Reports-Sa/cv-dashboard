@@ -4,6 +4,30 @@ export function isArabic(txt) {
   return /[\u0600-\u06FF\u0750-\u077F]/.test(txt || "");
 }
 
+// الدالة الذكية المحدثة لقراءة الحزم الثلاث
+export function extractLangFromMarkdown(md) {
+  if (!md) return "عربي";
+  
+  // نبحث عن السطر الذي يحتوي على تفاصيل الحزمة
+  const pkgMatch = md.match(/(?:الحزمة|اللغة)[\s\S]{0,60}/i);
+  
+  if (pkgMatch) {
+    const text = pkgMatch[0];
+    
+    // 1. إذا كان يحتوي على "سيرتين" أو اللغتين معاً
+    if (text.includes("سيرتين") || (text.includes("عربي") && text.includes("إنجليزي"))) {
+      return "عربي + EN";
+    }
+    // 2. إذا كان إنجليزي فقط
+    if (text.includes("إنجليزي") || text.includes("انجليزي") || text.includes("English")) {
+      return "EN";
+    }
+  }
+  
+  // 3. الافتراضي (عربي)
+  return "عربي";
+}
+
 export const LS = {
   get: (k, fb) => {
     try {
@@ -53,7 +77,6 @@ export function extractNameFromMarkdown(md) {
   return "";
 }
 
-// ----- دوال الاتصال بالسحابة (JSONBin) -----
 export const Cloud = {
   save: async (key, binId, data) => {
     const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
