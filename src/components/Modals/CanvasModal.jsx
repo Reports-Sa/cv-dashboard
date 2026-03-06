@@ -1,10 +1,9 @@
-// src/components/Workspace/CanvasModal.jsx
+// src/components/Modals/CanvasModal.jsx
 import React from 'react';
 import { Tldraw } from 'tldraw';
 import 'tldraw/tldraw.css';
 import Icon from '../UI/Icon';
 
-// استخدام React.memo لمنع إعادة تحميل اللوحة عند تحديث العداد في الخلفية
 const CanvasModal = React.memo(function CanvasModal({ onClose }) {
   return (
     <div className="modal-overlay" style={{ zIndex: 2000 }}>
@@ -12,7 +11,7 @@ const CanvasModal = React.memo(function CanvasModal({ onClose }) {
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
              <Icon name="canvas" size={20} style={{ color: 'var(--accent)' }} />
-             <h3>🎨 اللوحة البصرية </h3>
+             <h3>🎨 اللوحة البصرية (النسخة الاحترافية المرخصة)</h3>
           </div>
           <button className="btn btn-ghost btn-icon" onClick={onClose}>
             <Icon name="close" size={18} />
@@ -21,10 +20,13 @@ const CanvasModal = React.memo(function CanvasModal({ onClose }) {
         
         <div style={{ flex: 1, position: 'relative', direction: 'ltr', background: '#f8f9fa' }}>
           {/* 
-             في الإصدار 3.6.1، اللوحة تعمل بكامل طاقتها. 
-              persistenceKey يضمن بقاء رسوماتك محفوظة في المتصفح.
+            تمت الترقية للإصدار الأحدث!
+            ضع مفتاح الرخصة الخاص بك بالكامل داخل علامتي التنصيص هنا
           */}
-          <Tldraw persistenceKey="cv_ghazi_dashboard_v3" />
+          <Tldraw 
+            persistenceKey="cv_ghazi_dashboard_pro" 
+            licenseKey="tldraw-2031-03-02/WyJrRV90UFNpTyIsWyIqLmN2LWdoYXppLWRhc2gubmV0bGlmeS5hcHAiXSw5LCIyMDMxLTAzLTAyIl0.ma+R1gARqQ/yZUomqCpsBu3FbtnXML8wyUfzD0S5pmfDbNGgOObD3XQQxkH353jZoao2gA1yQs9lU6ZUULUhdg"
+          />
         </div>
       </div>
     </div>
@@ -32,4 +34,3 @@ const CanvasModal = React.memo(function CanvasModal({ onClose }) {
 });
 
 export default CanvasModal;
-
