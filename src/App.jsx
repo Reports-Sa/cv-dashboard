@@ -40,20 +40,18 @@ export default function App() {
   const[draftMode, setDraftMode] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [draftNotes, setDraftNotes] = useState({});
-  const [showSettings, setShowSettings] = useState(false);
+  const[showSettings, setShowSettings] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
   const[isLeftOpen, setIsLeftOpen] = useState(true);
-  const [isRightOpen, setIsRightOpen] = useState(true);
+  const[isRightOpen, setIsRightOpen] = useState(true);
   const [isActionCollapsed, setIsActionCollapsed] = useState(false);
 
-  // --- بيانات المزامنة السحابية ---
   const [prompts, setPrompts] = useState(() => LS.get("prompts", INITIAL_PROMPTS));
   const [tasksMeta, setTasksMeta] = useState(() => LS.get("tasks_meta", {})); 
 
   useEffect(() => { LS.set("prompts", prompts); }, [prompts]);
   useEffect(() => { LS.set("tasks_meta", tasksMeta); }, [tasksMeta]);
 
-  // دوال السحابة
   const syncToCloud = async () => {
     if (!binKey || !binId) return toastAdd("إعدادات السحابة (JSONBin) غير مكتملة", "error");
     setLoading(true);
@@ -130,7 +128,7 @@ export default function App() {
 
   const handleDraftChange = useCallback((key, val) => {
     setDraftNotes(prev => { const next = { ...prev,[key]: val }; if (selected) LS.set(`drafts_${selected.id}`, next); return next; });
-  }, [selected?.id]);
+  },[selected?.id]);
 
   const handleMarkdownChange = useCallback((newMd) => {
     if (!selected) return;
@@ -154,28 +152,34 @@ export default function App() {
     navigator.clipboard.writeText(out.join("\n")).then(() => toastAdd("تم النسخ ✓", "success"));
   };
 
+  // تعديل ذكي: تصوير الكانفاس إذا كانت مفتوحة، وإلا تصوير السيرة
   const takeScreenshot = useCallback(() => {
-    const el = document.querySelector(".cv-content");
-    if (!el) return;
+    // تحديد العنصر المستهدف للتصوير بناءً على حالة الكانفاس
+    const targetSelector = showCanvas ? ".modal-fullscreen" : ".cv-content";
+    const el = document.querySelector(targetSelector);
+    
+    if (!el) {
+      toastAdd("لا يوجد محتوى للتصوير", "error");
+      return;
+    }
+    
     toastAdd("جاري التصوير...", "info");
     html2canvas(el, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
       const link = document.createElement("a");
-      link.download = `cv_${selected?.id}_${Date.now()}.png`;
+      const namePrefix = showCanvas ? "canvas" : "cv";
+      link.download = `${namePrefix}_${selected?.id || 'shot'}_${Date.now()}.png`;
       link.href = canvas.toDataURL();
       link.click();
       toastAdd("تم الحفظ ✓", "success");
-    });
-  }, [selected, toastAdd]);
+    }).catch(() => toastAdd("فشل التصوير", "error"));
+  }, [selected, showCanvas, toastAdd]);
 
-  // تحديث اختصارات لوحة المفاتيح لدعم اللغة العربية
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // تصوير الشاشة (Ctrl+Shift+S أو س)
       if (e.ctrlKey && e.shiftKey && (e.code === "KeyS" || e.key.toLowerCase() === "s" || e.key === "س")) { 
         e.preventDefault(); 
         takeScreenshot(); 
       }
-      // طي/توسيع القوائم (Alt+C أو ؤ)
       if (e.altKey && (e.code === "KeyC" || e.key.toLowerCase() === "c" || e.key === "ؤ")) {
         e.preventDefault();
         const anyOpen = isLeftOpen || isRightOpen || !isActionCollapsed;
