@@ -1,6 +1,6 @@
 // src/components/SidebarRight/ClientList.jsx
 import React, { useState, useMemo } from "react";
-import { isArabic, fmtDate, extractNameFromMarkdown } from "../../utils/helpers";
+import { fmtDate, extractNameFromMarkdown, extractLangFromMarkdown } from "../../utils/helpers";
 
 export default function ClientList({ submissions, selected, onSelect, loading, tasksMeta }) {
   const [search, setSearch] = useState("");
@@ -13,7 +13,7 @@ export default function ClientList({ submissions, selected, onSelect, loading, t
       const searchEmail = (s.data.email || "").toLowerCase();
       return !q || searchName.includes(q) || searchEmail.includes(q);
     });
-  }, [submissions, search]);
+  },[submissions, search]);
 
   return (
     <>
@@ -29,12 +29,25 @@ export default function ClientList({ submissions, selected, onSelect, loading, t
           onChange={(e) => setSearch(e.target.value)}
         />
         {filtered.map((s) => {
-          const ar = isArabic(s.data.markdown_data);
+          // استخراج اللغة
+          const lang = extractLangFromMarkdown(s.data.markdown_data);
+          
+          // تحديد تصميم علامة (Badge) اللغة بناءً على النتيجة
+          let badgeClass = "badge";
+          let badgeStyle = {};
+          
+          if (lang === "عربي") {
+            badgeClass += " ar"; // برتقالي (موجود مسبقاً في CSS)
+          } else if (lang === "EN") {
+            badgeStyle = { background: '#dbeafe', color: '#1e40af' }; // أزرق للإنجليزي
+          } else {
+            // عربي + EN (حزمة السيرتين)
+            badgeStyle = { background: '#f3e8ff', color: '#7e22ce' }; // بنفسجي للباقتين
+          }
+
           const displayName = s.data.name || extractNameFromMarkdown(s.data.markdown_data) || "— بدون اسم —";
           
-          // تحديد الحالة
           const meta = (tasksMeta && tasksMeta[s.id]) || { status: "new" };
-          
           let statusClass = "";
           let badge = null;
 
@@ -60,7 +73,9 @@ export default function ClientList({ submissions, selected, onSelect, loading, t
             >
               <div className="name">{displayName}</div>
               <div className="meta">
-                <span className={`badge ${ar ? "ar" : ""}`}>{ar ? "عربي" : "EN"}</span>
+                <span className={badgeClass} style={badgeStyle}>
+                  {lang}
+                </span>
                 <span>{fmtDate(s.created_at)}</span>
                 {badge}
               </div>
