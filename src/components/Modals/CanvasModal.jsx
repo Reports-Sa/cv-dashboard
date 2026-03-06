@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { 
   Tldraw, 
-  exportToBlob, 
   ShapeUtil, 
   HTMLContainer, 
   T,
@@ -40,7 +39,6 @@ class CvNodeUtil extends ShapeUtil {
     };
   }
 
-  // استخدام Rectangle2d المستوردة لضمان عمل البناء (Build) بنجاح
   getGeometry(shape) {
     return new Rectangle2d({
       width: shape.props.w,
@@ -108,17 +106,16 @@ class CvNodeTool extends BaseBoxShapeTool {
 }
 
 const customShapeUtils = [CvNodeUtil];
-const customTools = [CvNodeTool];
+const customTools =[CvNodeTool];
 
 // ==========================================
 // 3. تعديل واجهة tldraw (دمج الأداة في الشريط السفلي)
 // ==========================================
 const uiOverrides = {
   tools(editor, tools) {
-    // إضافة أداتنا لقائمة الأدوات
     tools['cv-node'] = {
       id: 'cv-node',
-      icon: 'tool-frame', // أيقونة شبيهة بالمكعب
+      icon: 'tool-frame', 
       label: 'عقدة سيرة',
       kbd: 'n',
       onSelect: () => editor.setCurrentTool('cv-node'),
@@ -127,16 +124,13 @@ const uiOverrides = {
   },
 };
 
-// تصميم الشريط السفلي المخصص
 const CustomToolbar = (props) => {
   const tools = useTools();
   const isNodeSelected = useIsToolSelected(tools['cv-node']);
   
   return (
     <DefaultToolbar {...props}>
-      {/* زر الأداة الجديدة الخاص بنا */}
       <TldrawUiMenuItem {...tools['cv-node']} isSelected={isNodeSelected} />
-      {/* باقي أدوات tldraw الأصلية */}
       <DefaultToolbarContent />
     </DefaultToolbar>
   );
@@ -146,51 +140,21 @@ const CustomToolbar = (props) => {
 // 4. المكون الرئيسي للوحة
 // ==========================================
 const CanvasModal = React.memo(function CanvasModal({ onClose }) {
-  const [editor, setEditor] = useState(null);
-
-  const takeNativeScreenshot = async () => {
-    if (!editor) return;
-    const shapeIds = Array.from(editor.getCurrentPageShapeIds());
-    if (shapeIds.length === 0) {
-      alert("اللوحة فارغة! قم بالرسم أولاً.");
-      return;
-    }
-    try {
-      const blob = await exportToBlob({
-        editor, ids: shapeIds, format: 'png',
-        opts: { background: true, padding: 32 }
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = `cv_map_${Date.now()}.png`;
-      link.href = url;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("فشل تصوير اللوحة:", err);
-      alert("حدث خطأ أثناء حفظ الصورة.");
-    }
-  };
+  const[editor, setEditor] = useState(null);
 
   return (
     <div className="modal-overlay" style={{ zIndex: 2000 }}>
       <div className="modal modal-fullscreen" style={{ display: 'flex', flexDirection: 'column' }}>
         
-        {/* الشريط العلوي الخارجي (كما طلبت تماماً) */}
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
              <Icon name="canvas" size={20} style={{ color: 'var(--accent)' }} />
              <h3>🎨 اللوحة البصرية</h3>
           </div>
           
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button className="btn btn-secondary btn-sm" onClick={takeNativeScreenshot} title="تصوير اللوحة عالية الدقة">
-              <Icon name="camera" size={14} /> تصوير الشاشة
-            </button>
-            <button className="btn btn-ghost btn-icon" onClick={onClose}>
-              <Icon name="close" size={18} />
-            </button>
-          </div>
+          <button className="btn btn-ghost btn-icon" onClick={onClose}>
+            <Icon name="close" size={18} />
+          </button>
         </div>
         
         <div style={{ flex: 1, position: 'relative', direction: 'ltr', background: '#f8f9fa' }}>
@@ -200,8 +164,8 @@ const CanvasModal = React.memo(function CanvasModal({ onClose }) {
             tools={customTools}
             overrides={uiOverrides}
             components={{ 
-              Watermark: null, // إخفاء العلامة المائية تماماً
-              Toolbar: CustomToolbar // استبدال شريط الأدوات بالشريط الذي يدمج أداتنا
+              Watermark: null, 
+              Toolbar: CustomToolbar 
             }}
             persistenceKey="cv_ghazi_dashboard_pro"
             licenseKey="tldraw-2031-03-02/WyJrRV90UFNpTyIsWyIqLmN2LWdoYXppLWRhc2gubmV0bGlmeS5hcHAiXSw5LCIyMDMxLTAzLTAyIl0.ma+R1gARqQ/yZUomqCpsBu3FbtnXML8wyUfzD0S5pmfDbNGgOObD3XQQxkH353jZoao2gA1yQs9lU6ZUULUhdg"
